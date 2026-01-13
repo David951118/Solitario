@@ -1,14 +1,33 @@
-/**
-	Especificaciones CSS para el juego del solitario 
-*/
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
 
-/* /*** !!!!!!!!!!!!!!!!!!! CODIGO !!!!!!!!!!!!!!!!!!!! 
-	Completar los estilos que faltan y modificar al gusto del alumno
-**/
+body {
+	background-image: url("../imagenes/bg-table.jpg");
+	background-size: cover;
+	background-position: center;
+}
 
-/* Todos los contadores estarán ubicados en la parte inferior 
-   derecha (position absolute) de los respectivos tapetes (position relative).
-*/
+header {
+	background-color: rgba(0, 0, 0, 0.5);
+	padding: 12px 16px;
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: space-between;
+	align-items: center;
+}
+
+header h2 {
+	color: #fff;
+	font-size: 1.5rem;
+}
+
+.logo {
+	width: 80px;
+}
+
 .contador {
 	position: absolute;
 	bottom: 0px;
@@ -18,49 +37,245 @@
 
 /* Centrado del título y color */
 h1#titulo {
+	margin: 0;
 	text-align: center;
 	color: #E65014;
 }
 
 /* Centrado de los marcadores de tiempo y movimientos */
-h2#marcadores{ 
-	text-align: center; 
+h2#marcadores {
+	text-align: center;
 }
 
 /* Mesa que contiene a los tapetes centrados */
-div#mesa{
+div#mesa {
 	text-align: center;
-	margin:20px;
+	margin: 20px;
 }
 
 /* Todos los tapetes con position relative para que
    los respectivos mazos (arrays de <img>) puedan
    posicionarse de manera absoluta respecto a ellos */
-div.tapete{
+div.tapete {
 	display: inline-block;
 	position: relative;
 	margin: 10px;
 }
 
 /* Dimensiones y color de fondo para el tapete inicial */
-div.tapete#inicial{
+div.tapete#inicial {
 	width: 340px;
-	height: 340px;			
-	background-color: lightgrey;
+	height: 340px;
+	background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Dimensiones para todos los tapetes salvo el inicial */
-div.tapete:not(#inicial){				
+div.tapete:not(#inicial) {
 	height: 125px;
 	width: 100px;
 }
 
-/* Color de fondo para el tapete de las cartas sobrantes */
-div.tapete#sobrantes{
-	background-color: lightblue;
+
+/* Círculo central usando pseudo-elemento */
+div.tapete#sobrantes::after {
+	content: "";
+	position: absolute;
+	width: 100px;
+	height: 100px;
+	border: 4px solid rgba(0, 0, 0, 0.5);
+	border-radius: 50%;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 /* Color de fondo de los tapetes receptores */
-div.tapete.receptor{
-	background-color: lightgreen;
+div.tapete.receptor {
+	border: 4px solid rgba(0, 0, 0, 0.5);
+	border-radius: 5px;
+}
+
+/* Modal sin movimientos */
+.modal-nomoves {
+	display: none;
+	/* Controlar a block cuando sea el caso*/
+	position: fixed;
+	z-index: 1;
+	padding-top: 190px;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgb(0, 0, 0);
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-nomoves-content {
+	position: relative;
+	background: linear-gradient(135deg, #E65014 0%, #B3360A 100%);
+	margin: auto;
+	padding: 38px;
+	border: 4px solid #fff;
+	width: 44%;
+	border-radius: 15px;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+	color: white;
+	text-align: center;
+}
+
+.modal-nomoves-content button {
+	margin-top: 20px;
+	background-color: white !important;
+	color: #E65014 !important;
+	font-weight: bold;
+	border: none;
+	padding: 10px 30px;
+}
+
+/* Modal contenedor para Victoria */
+.modal-victory {
+	display: none;
+	/* Controlar a block cuando sea el caso*/
+	position: fixed;
+	z-index: 100;
+	padding-top: 190px;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.85);
+}
+
+.victory-container {
+	position: relative;
+	width: 450px;
+	margin: auto;
+	background: transparent;
+}
+
+.victory-ribbon {
+	position: relative;
+	z-index: 10;
+	width: 110%;
+	left: -5%;
+	background: linear-gradient(to bottom, #FF8C5A, #E65014);
+	color: white;
+	text-align: center;
+	padding: 15px 0;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+	border-radius: 5px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 80px;
+}
+
+.victory-ribbon h2 {
+	margin: 0;
+	font-size: 2rem;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+	flex-grow: 1;
+}
+
+.victory-badge {
+	position: absolute;
+	left: -10px;
+	top: -10px;
+	width: 80px;
+	height: 80px;
+	background: radial-gradient(circle, #fff 40%, #E65014 100%);
+	border-radius: 50%;
+	border: 4px solid #fff;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 15;
+}
+
+.victory-badge img {
+	width: 60%;
+	height: auto;
+}
+
+.victory-body {
+	position: relative;
+	top: -20px;
+	background: linear-gradient(180deg, #E65014 0%, #B3360A 100%);
+	padding: 50px 30px 30px 30px;
+	border-radius: 0 0 15px 15px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+	z-index: 5;
+	border: 2px solid #fff;
+	border-top: none;
+}
+
+.victory-inner-panel {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 10px;
+	padding: 30px;
+	text-align: center;
+	color: white;
+}
+
+.victory-inner-panel p {
+	font-size: 1.2rem;
+	margin-bottom: 25px;
+	color: #ffd;
+}
+
+.btn-custom {
+	background: linear-gradient(to bottom, #fff, #ddd);
+	color: #E65014;
+	font-weight: bold;
+	border: none;
+	padding: 10px 40px;
+	border-radius: 20px;
+	font-size: 1.1rem;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+	transition: transform 0.1s;
+}
+
+.btn-custom:active {
+	transform: scale(0.95);
+}
+
+.btn-custom:hover {
+	background: #fff;
+	color: #FF8C5A;
+}
+
+.close {
+	position: absolute;
+	top: 15px;
+	right: 35px;
+	color: #f1f1f1;
+	font-size: 40px;
+	font-weight: bold;
+	transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+	color: #bbb;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+footer {
+	background-color: rgba(0, 0, 0, 0.5);
+	padding: 12px 16px;
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: space-between;
+	align-items: center;
+	row-gap: 15px;
+}
+
+footer p {
+	color: white;
+	text-align: center;
 }
