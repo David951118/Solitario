@@ -165,7 +165,7 @@ function barajar(mazo) {
 }
 
 /**
- 	En el elemento HTML que representa el tapete inicial (variable tapeteInicial)
+	  En el elemento HTML que representa el tapete inicial (variable tapeteInicial)
 	se deben añadir como hijos todos los elementos <img> del array mazo.
 	Antes de añadirlos, se deberían fijar propiedades como la anchura, la posición,
 	coordenadas top y left, algun atributo de tipo data-...
@@ -200,8 +200,8 @@ function cargarTapeteInicial(mazo) {
 } // cargarTapeteInicial
 
 /**
- 	Esta función debe incrementar el número correspondiente al contenido textual
-   	del elemento que actúa de contador
+	  Esta función debe incrementar el número correspondiente al contenido textual
+		  del elemento que actúa de contador
 */
 function incContador(contador) {
   // Obtener el valor actual del contador (es texto, lo convertimos a número)
@@ -232,3 +232,46 @@ function setContador(contador, valor) {
   // Simplemente establecer el valor que nos pasan
   contador.textContent = valor;
 } // setContador
+
+// Función para actualizar el año en el footer
+function actualizarAnio() {
+	let fecha = new Date();
+	let anio = fecha.getFullYear();
+	let elemento = document.getElementById("anno_actual");
+	if (elemento) {
+		elemento.textContent = anio;
+	}
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+	actualizarAnio();
+
+	// Referencias a los modales
+	var modalNoMoves = document.getElementById("noMoves");
+	var modalVictory = document.getElementById("victory");
+
+	// Botones de cerrar (hay dos, uno por cada modal)
+	var spans = document.getElementsByClassName("close");
+
+	// Cerrar modal 'Sin movimientos'
+	if (spans[0] && modalNoMoves) {
+		spans[0].onclick = function () {
+			modalNoMoves.style.display = "none";
+		}
+	}
+
+	// Cerrar modal 'Victoria'
+	if (spans[1] && modalVictory) {
+		spans[1].onclick = function () {
+			modalVictory.style.display = "none";
+		}
+	}
+
+	// Botón Jugar de nuevo
+	var btnVictoryReset = document.getElementById("victory_reset");
+	if (btnVictoryReset) {
+		btnVictoryReset.onclick = function () {
+			location.reload();
+		}
+	}
+});
