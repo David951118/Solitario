@@ -3,9 +3,9 @@
 // Array de palos
 let palos = ["viu", "cua", "hex", "cir"];
 // Array de número de cartas
-let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+//let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // En las pruebas iniciales solo se trabajará con cuatro cartas por palo:
-//let numeros = [9, 10, 11, 12];
+let numeros = [9, 10, 11, 12];
 
 // paso (top y left) en pixeles de una carta a la siguiente en un mazo
 let paso = 5;
@@ -50,8 +50,6 @@ let temporizador = null; // manejador del temporizador
  */
 window.onload = function () {
   // PASO 1: Inicializar todas las referencias a elementos del DOM
-  // Esto DEBE hacerse aquí porque el DOM ya está completamente cargado
-
   // Tapetes
   tapeteInicial = document.getElementById("inicial");
   tapeteSobrantes = document.getElementById("sobrantes");
@@ -90,13 +88,10 @@ window.onload = function () {
 
 /**
  * Configura los eventos de clic para todos los botones de reinicio
- * Hay dos botones: uno en el footer y otro en el modal de sin movimientos
  */
 function configurarEventosReinicio() {
-  // Obtener todos los botones con id "reset" (hay 2 en el HTML)
   let botonesReset = document.querySelectorAll("#reset");
 
-  // Agregar evento de clic a cada botón de reset
   botonesReset.forEach(function (boton) {
     boton.addEventListener("click", function () {
       reiniciarJuego();
@@ -132,17 +127,21 @@ function configurarEventosModales() {
 
 /**
  * Pasa todas las cartas del mazo de sobrantes de vuelta al mazo inicial
+ * Y las BARAJA automáticamente (Requisito: Mazo cíclico aleatorio)
  */
 function recogerMazo() {
-  // Las cartas de sobrantes pasan al inicial en orden inverso para mantener la pila
+  // 1. Barajar las cartas que están en sobrantes
+  barajar(mazoSobrantes);
+
+  // 2. Moverlas a inicial
   while (mazoSobrantes.length > 0) {
     let carta = mazoSobrantes.pop();
     mazoInicial.push(carta);
     carta.setAttribute("data-mazo", "inicial");
   }
 
-  // Limpiamos los tapetes y volvemos a cargar el inicial visualmente
-  tapeteSobrantes.innerHTML = "";
+  // 3. Limpiar tapete y renderizar de nuevo
+  limpiarTapete(tapeteSobrantes);
   cargarTapeteInicial(mazoInicial);
 
   // Reset de contadores
@@ -206,22 +205,34 @@ function configurarEventosDragDrop() {
  * Reinicia completamente el juego
  * Limpia todos los tapetes, detiene el temporizador y vuelve a comenzar
  */
+
+/**
+ * Helper para limpiar cartas de un tapete sin borrar el contador
+ */
+function limpiarTapete(tapete) {
+  // Eliminar todas las imagenes (cartas)
+  let cartas = tapete.querySelectorAll("img");
+  cartas.forEach((c) => c.remove());
+}
+
+/**
+ * Reinicia completamente el juego
+ */
 function reiniciarJuego() {
-  // Detener el temporizador si está corriendo
   if (temporizador) {
     clearInterval(temporizador);
     temporizador = null;
   }
 
-  // Limpiar todos los tapetes
-  tapeteInicial.innerHTML = "";
-  tapeteSobrantes.innerHTML = "";
-  tapeteReceptor1.innerHTML = "";
-  tapeteReceptor2.innerHTML = "";
-  tapeteReceptor3.innerHTML = "";
-  tapeteReceptor4.innerHTML = "";
+  // Limpiar cartas de todos los tapetes (manteniendo los contadores)
+  limpiarTapete(tapeteInicial);
+  limpiarTapete(tapeteSobrantes);
+  limpiarTapete(tapeteReceptor1);
+  limpiarTapete(tapeteReceptor2);
+  limpiarTapete(tapeteReceptor3);
+  limpiarTapete(tapeteReceptor4);
 
-  // Vaciar todos los mazos
+  // Vaciar arrays
   mazoInicial = [];
   mazoSobrantes = [];
   mazoReceptor1 = [];
@@ -229,11 +240,9 @@ function reiniciarJuego() {
   mazoReceptor3 = [];
   mazoReceptor4 = [];
 
-  // Ocultar modales si están visibles
   document.getElementById("noMoves").style.display = "none";
   document.getElementById("victory").style.display = "none";
 
-  // Comenzar un nuevo juego
   comenzarJuego();
 }
 
@@ -241,14 +250,6 @@ function reiniciarJuego() {
 
 // Desarrollo del comienzo de juego
 function comenzarJuego() {
-  /* Crear baraja, es decir crear el mazoInicial. Este será un array cuyos 
-  elementos serán elementos HTML <img>, siendo cada uno de ellos una carta.
-  Sugerencia: en dos bucles for, bárranse los "palos" y los "numeros", formando
-  oportunamente el nombre del fichero png que contiene a la carta (recuérdese poner
-  el path correcto en la URL asociada al atributo src de <img>). Una vez creado
-  el elemento img, inclúyase como elemento del array mazoInicial. 
-  */
-
   // Vaciar el mazoInicial por si ya había cartas de una partida anterior
   mazoInicial = [];
 
@@ -287,32 +288,7 @@ function comenzarJuego() {
   arrancarTiempo();
 } // comenzarJuego
 
-/**
-  Se debe encargar de arrancar el temporizador: cada 1000 ms se
-  debe ejecutar una función que a partir de la cuenta autoincrementada
-  de los segundos (segundos totales) visualice el tiempo oportunamente con el 
-  format hh:mm:ss en el contador adecuado.
-
-  Para descomponer los segundos en horas, minutos y segundos pueden emplearse
-  las siguientes igualdades:
-
-  segundos = truncar (   segundos_totales % (60)                 )
-  minutos  = truncar ( ( segundos_totales % (60*60) )     / 60   )
-  horas    = truncar ( ( segundos_totales % (60*60*24)) ) / 3600 )
-
-  donde % denota la operación módulo (resto de la división entre los operadores)
-
-  Así, por ejemplo, si la cuenta de segundos totales es de 134 s, entonces será:
-     00:02:14
-
-  Como existe la posibilidad de "resetear" el juego en cualquier momento, hay que 
-  evitar que exista más de un temporizador simultáneo, por lo que debería guardarse
-  el resultado de la llamada a setInterval en alguna variable para llamar oportunamente
-  a clearInterval en su caso.   
-*/
-
 function arrancarTiempo() {
-  /*** !!!!!!!!!!!!!!!!!!! CODIGO !!!!!!!!!!!!!!!!!!!! **/
   if (temporizador) clearInterval(temporizador);
   let hms = function () {
     let seg = Math.trunc(segundos % 60);
@@ -332,12 +308,6 @@ function arrancarTiempo() {
   temporizador = setInterval(hms, 1000);
 } // arrancarTiempo
 
-/**
-  Si mazo es un array de elementos <img>, en esta rutina debe ser
-  reordenado aleatoriamente. Al ser un array un objeto, se pasa
-  por referencia, de modo que si se altera el orden de dicho array
-  dentro de la rutina, esto aparecerá reflejado fuera de la misma.
-*/
 function barajar(mazo) {
   // Recorremos el array desde el final hacia el inicio
   for (let i = mazo.length - 1; i > 0; i--) {
@@ -355,12 +325,9 @@ function barajar(mazo) {
   }
 }
 
-/**
-    En el elemento HTML que representa el tapete inicial (variable tapeteInicial)
-  se deben añadir como hijos todos los elementos <img> del array mazo.
-*/
 function cargarTapeteInicial(mazo) {
-  tapeteInicial.innerHTML = "";
+  // Limpiar cartas anteriores pero mantener el contador
+  limpiarTapete(tapeteInicial);
 
   for (let i = 0; i < mazo.length; i++) {
     let carta = mazo[i];
@@ -375,20 +342,19 @@ function cargarTapeteInicial(mazo) {
     // Habilitar arrastre
     carta.draggable = true;
 
-    // Evento de clic (por si prefieres clic en lugar de arrastrar)
+    // Evento de clic
     carta.addEventListener("click", function (e) {
-      e.stopPropagation(); // Evitar que el clic llegue al tapete debajo
+      e.stopPropagation();
       manejarClicCarta(carta);
     });
 
     // Eventos de Drag & Drop
     carta.addEventListener("dragstart", function (e) {
-      // Solo dejamos arrastrar si es la carta de arriba
       if (esLaDeArriba(carta)) {
         e.dataTransfer.setData("text/plain", carta.src);
         carta.classList.add("dragging");
       } else {
-        e.preventDefault(); // Bloquear arrastre de cartas de abajo
+        e.preventDefault();
       }
     });
 
@@ -402,9 +368,6 @@ function cargarTapeteInicial(mazo) {
   setContador(contInicial, mazo.length);
 }
 
-/**
- * Función auxiliar para saber si una carta es la que está encima de su mazo
- */
 function esLaDeArriba(carta) {
   let mazoNombre = carta.getAttribute("data-mazo");
   if (mazoNombre === "inicial")
@@ -414,10 +377,6 @@ function esLaDeArriba(carta) {
   return false;
 }
 
-/**
-    Esta función debe incrementar el número correspondiente al contenido textual
-      del elemento que actúa de contador
-*/
 function incContador(contador) {
   // Obtener el valor actual del contador (es texto, lo convertimos a número)
   let valorActual = parseInt(contador.textContent);
@@ -427,9 +386,6 @@ function incContador(contador) {
   contador.textContent = nuevoValor;
 } // incContador
 
-/**
-  Idem que anterior, pero decrementando 
-*/
 function decContador(contador) {
   // Obtener el valor actual del contador
   let valorActual = parseInt(contador.textContent);
@@ -439,10 +395,6 @@ function decContador(contador) {
   contador.textContent = nuevoValor;
 } // decContador
 
-/**
-  Similar a las anteriores, pero ajustando la cuenta al
-  valor especificado
-*/
 function setContador(contador, valor) {
   // Simplemente establecer el valor que nos pasan
   contador.textContent = valor;
@@ -460,13 +412,12 @@ function manejarClicCarta(carta) {
   // Obtener el mazo de origen de la carta
   let mazoOrigen = carta.getAttribute("data-mazo");
 
-  // Solo se pueden mover cartas del mazo inicial o sobrantes
+  // REGLA: "qu no haga automovimientos"
+  // Solo permitimos clic en INICIAL para pasar a SOBRANTES (dealing)
   if (mazoOrigen === "inicial") {
     moverDesdeInicial(carta);
-  } else if (mazoOrigen === "sobrantes") {
-    moverDesdeSobrantes(carta);
   }
-  // Las cartas en los receptores no se mueven (ya están en su lugar final)
+  // Si es sobrantes, NO HACEMOS NADA. El usuario debe arrastrar.
 }
 
 /**
@@ -505,56 +456,39 @@ function moverDesdeInicial(carta) {
 }
 
 /**
- * Mueve una carta desde el tapete de sobrantes a un receptor
- * Si se especifica destinoId, intenta mover a ese receptor.
- * Si no, busca automáticamente el mejor receptor.
- *
- * @param {HTMLElement} carta - La carta a mover
- * @param {string} [destinoId] - ID del tapete destino (opcional)
+ * Mueve una carta desde sobrantes a un receptor específico
+ * (Adapada para Drag & Drop dinámico)
  */
-function moverDesdeSobrantes(carta, destinoId = null) {
-  // Verificar que sea la última carta del mazo de sobrantes
-  if (mazoSobrantes[mazoSobrantes.length - 1] !== carta) {
+function moverDesdeSobrantes(carta, idReceptorDestino) {
+  // Validar origen
+  if (mazoSobrantes[mazoSobrantes.length - 1] !== carta) return;
+
+  // Obtener info del receptor destino
+  let infoDestino;
+  if (idReceptorDestino) {
+    infoDestino = getInfoReceptor(idReceptorDestino);
+  } else {
+    // Si no se especifica (esto era para el autocompletado antiguo), no hacemos nada
     return;
   }
 
-  // Determinar el destino
-  let infoDestino = null;
-
-  if (destinoId) {
-    // Si hay un destino explícito (drag & drop)
-    infoDestino = getInfoReceptor(destinoId);
-    if (!esMovimientoValido(carta, infoDestino.mazo)) return;
-  } else {
-    // Automático (clic): Buscar el mejor receptor
-    infoDestino = buscarReceptorParaCarta(carta);
-    if (!infoDestino) return; // No hay movimiento válido
-  }
-
   // Ejecutar movimiento
-  let { tapete, mazo, contador, id } = infoDestino;
-
-  // Remover de sobrantes
   mazoSobrantes.pop();
+  infoDestino.mazo.push(carta);
 
-  // Agregar al receptor
-  mazo.push(carta);
+  carta.setAttribute("data-mazo", infoDestino.id);
+  infoDestino.tapete.appendChild(carta);
 
-  // Actualizar atributo
-  carta.setAttribute("data-mazo", id);
+  // RESETEO NUCLEAR DE ESTILOS
+  // Usamos cssText para sobrescribir todo de una sola vez
+  let numCartasDestino = infoDestino.mazo.length - 1; // Assuming this is the intended value for positioning
+  let topPx = numCartasDestino * paso;
+  let leftPx = numCartasDestino * paso;
 
-  // Mover visualmente
-  tapete.appendChild(carta);
+  carta.style.cssText = `width: 70px; position: absolute; top: ${topPx}px; left: ${leftPx}px; transform: none !important; margin: 0; padding: 0;`;
 
-  // Posicionar
-  let numCartas = mazo.length - 1;
-  carta.style.top = numCartas * paso + "px";
-  carta.style.left = numCartas * paso + "px";
-  carta.style.transform = "";
-
-  // Actualizar contadores
   decContador(contSobrantes);
-  incContador(contador);
+  incContador(infoDestino.contador);
   incContador(contMovimientos);
 
   verificarVictoria();
@@ -568,156 +502,167 @@ function moverDesdeSobrantes(carta, destinoId = null) {
  * @param {Array} mazoDestino - El mazo receptor donde se quiere colocar
  * @returns {boolean} - true si el movimiento es válido, false si no
  */
-function esMovimientoValido(carta, mazoDestino) {
-  // Obtener el número de la carta desde el nombre del archivo
-  // Ejemplo: "imagenes/baraja/9-viu.png" -> extraer "9"
+/**
+ * Helper: Extrae información clave de la carta
+ */
+function getInfoCarta(carta) {
   let src = carta.src;
-  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1); // "9-viu.png"
-  let partes = nombreArchivo.split("-"); // ["9", "viu.png"]
-  let numeroStr = partes[0]; // "9"
-  let numero = parseInt(numeroStr); // 9
+  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1); // "12-viu.png"
+  let partes = nombreArchivo.split("-");
+  let numero = parseInt(partes[0]);
+  let palo = partes[1].replace(".png", "");
 
-  // Si el receptor está vacío, solo se puede colocar el 9 (en este caso el 1/As si numeros[0] es 1)
-  if (mazoDestino.length === 0) {
-    return numero === numeros[0];
-  }
+  // Naranja: viu, cua | Gris: hex, cir
+  let color = palo === "viu" || palo === "cua" ? "naranja" : "gris"; // Revisar si viu/cua son naranjas
+  // Segun enunciado: "los dos primeros son narajas y lso otros sion grises" -> viu, cua = naranja
 
-  // Si tiene cartas, obtener la última para comparar palo y número
-  let ultimaCarta = mazoDestino[mazoDestino.length - 1];
-  let infoUltima = obtenerInfoCarta(ultimaCarta);
-  let infoNueva = obtenerInfoCarta(carta);
-
-  // 1. Validar PALO: Debe ser el mismo palo
-  if (infoUltima.palo !== infoNueva.palo) return false;
-
-  // 2. Validar NÚMERO: Debe ser consecutivo
-  let indiceActual = numeros.indexOf(infoUltima.numero);
-  if (indiceActual === -1) return false; // Error inesperado
-
-  let siguienteNumero = numeros[indiceActual + 1];
-  return infoNueva.numero === siguienteNumero;
+  return { numero, palo, color };
 }
 
 /**
- * Verifica si el jugador ha ganado
- * El jugador gana cuando los 4 receptores tienen 4 cartas cada uno (todas las cartas)
+ * Valida si una carta puede ir al mazo destino
+ * Regla: Decreciente (12->1) y Alternando Color
+ */
+function esMovimientoValido(carta, mazoDestino) {
+  let infoCarta = getInfoCarta(carta);
+
+  // 1. Si está vacío, solo admite el 12
+  if (mazoDestino.length === 0) {
+    return infoCarta.numero === 12;
+  }
+
+  // 2. Si no está vacío
+  let ultimaCarta = mazoDestino[mazoDestino.length - 1];
+  let infoUltima = getInfoCarta(ultimaCarta);
+
+  // Orden Decreciente: La carta en el tapete (infoUltima) debe ser mayor por 1
+  // Ejemplo: En tapete hay un 12. Quiero poner un 11. 12 == 11 + 1 ? Si.
+  let esDecreciente = infoUltima.numero === infoCarta.numero + 1;
+
+  // Color Alterno
+  let esColorDistinto = infoUltima.color !== infoCarta.color;
+
+  return esDecreciente && esColorDistinto;
+}
+
+/**
+ * Verifica Victoria: Si no quedan cartas en MazoInicial ni Sobrantes
  */
 function verificarVictoria() {
-  // Verificar si cada receptor tiene todas sus cartas (4 cartas)
-  let cantidadPorReceptor = numeros.length; // 4 cartas
-
-  if (
-    mazoReceptor1.length === cantidadPorReceptor &&
-    mazoReceptor2.length === cantidadPorReceptor &&
-    mazoReceptor3.length === cantidadPorReceptor &&
-    mazoReceptor4.length === cantidadPorReceptor
-  ) {
-    // ¡Victoria! Detener el temporizador
-    if (temporizador) {
-      clearInterval(temporizador);
-    }
-
-    // Mostrar el modal de victoria
+  if (mazoInicial.length === 0 && mazoSobrantes.length === 0) {
+    if (temporizador) clearInterval(temporizador);
     setTimeout(() => {
       document.getElementById("victory").style.display = "block";
-    }, 500); // Pequeño delay para que se vea la última carta colocada
+    }, 500);
   }
 }
 
 /**
- * Función especial para mover una carta de Inicial directamente a un Receptor
- * sin tener que pasar por sobrantes (si es un movimiento válido)
+ * Mueve carta directamente al receptor (usado en Drag & Drop)
  */
+function moverDirectoAReceptor(
+  carta,
+  mazoDestino,
+  tapeteDestino,
+  contadorDestino,
+) {
+  mazoInicial.pop();
+  mazoDestino.push(carta);
+  carta.setAttribute("data-mazo", tapeteDestino.id);
+  tapeteDestino.appendChild(carta);
 
-function moverDirectoAReceptor(carta, destinoId) {
-  // Solo se puede mover la de arriba
-  if (!esLaDeArriba(carta)) return;
+  let num = mazoDestino.length - 1;
+  carta.style.top = num * paso + "px";
+  carta.style.left = num * paso + "px";
+  carta.style.transform = "none";
 
-  // Si viene de drag & drop, destinoId está definido.
-  let infoDestino = getInfoReceptor(destinoId);
-
-  // Validar movimiento
-  if (esMovimientoValido(carta, infoDestino.mazo)) {
-    // Ejecutar movimiento
-    mazoInicial.pop();
-    infoDestino.mazo.push(carta);
-    carta.setAttribute("data-mazo", infoDestino.id);
-    infoDestino.tapete.appendChild(carta);
-
-    let num = infoDestino.mazo.length - 1;
-    carta.style.top = num * paso + "px";
-    carta.style.left = num * paso + "px";
-
-    decContador(contInicial);
-    incContador(infoDestino.contador);
-    incContador(contMovimientos);
-    verificarVictoria();
-  }
+  decContador(contInicial);
+  incContador(contadorDestino);
+  incContador(contMovimientos);
+  verificarVictoria();
 }
-
 /**
- * Utilería para obtener info de una carta (palo y número) desde su src
+ * Configura los eventos dragover y drop para permitir mover a cualquier receptor válido
  */
-function obtenerInfoCarta(carta) {
-  let src = carta.src;
-  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1);
-  let partes = nombreArchivo.split("-");
-  return {
-    numero: parseInt(partes[0]),
-    palo: partes[1].replace(".png", "")
-  };
-}
+function configurarEventosDragDrop() {
+  let receptores = [
+    tapeteSobrantes,
+    tapeteReceptor1,
+    tapeteReceptor2,
+    tapeteReceptor3,
+    tapeteReceptor4,
+  ];
 
-/**
- * Obtiene el objeto mazo array a partir del ID del tapete
- */
-function getMazoDesdeTapete(idTapete) {
-  return getInfoReceptor(idTapete).mazo;
-}
+  receptores.forEach((tapete) => {
+    tapete.addEventListener("dragover", function (e) {
+      e.preventDefault(); // Permitir el drop
+    });
 
-/**
- * Obtiene referencia al tapete, mazo y contador a partir de un ID (receptor1, etc)
- */
-function getInfoReceptor(id) {
-  switch (id) {
-    case "receptor1": return { id: "receptor1", tapete: tapeteReceptor1, mazo: mazoReceptor1, contador: contReceptor1 };
-    case "receptor2": return { id: "receptor2", tapete: tapeteReceptor2, mazo: mazoReceptor2, contador: contReceptor2 };
-    case "receptor3": return { id: "receptor3", tapete: tapeteReceptor3, mazo: mazoReceptor3, contador: contReceptor3 };
-    case "receptor4": return { id: "receptor4", tapete: tapeteReceptor4, mazo: mazoReceptor4, contador: contReceptor4 };
-    default: return null;
-  }
-}
+    tapete.addEventListener("drop", function (e) {
+      e.preventDefault();
 
-/**
- * Busca un receptor válido para una carta dada (auto-move)
- */
-function buscarReceptorParaCarta(carta) {
-  let infoCarta = obtenerInfoCarta(carta);
+      let cartaArrastrada = document.querySelector(".dragging");
+      if (!cartaArrastrada) return;
 
-  // 1. Buscar si ya hay un mazo con ese palo
-  // Iteramos receptores 1 a 4
-  for (let i = 1; i <= 4; i++) {
-    let info = getInfoReceptor("receptor" + i);
-    if (info.mazo.length > 0) {
-      let ultima = info.mazo[info.mazo.length - 1];
-      let infoUltima = obtenerInfoCarta(ultima);
-      // Si coincide el palo
-      if (infoUltima.palo === infoCarta.palo) {
-        // Verificar si el número es el siguiente
-        if (esMovimientoValido(carta, info.mazo)) return info;
+      let idTapeteDestino = tapete.id;
+      let mazoOrigen = cartaArrastrada.getAttribute("data-mazo");
+
+      // 1. Soltar en SOBRANTES (solo desde Inicial)
+      if (idTapeteDestino === "sobrantes") {
+        if (mazoOrigen === "inicial") {
+          moverDesdeInicial(cartaArrastrada);
+        }
       }
-    }
-  }
+      // 2. Soltar en CUALQUIER RECEPTOR
+      else if (tapete.classList.contains("receptor")) {
+        // Identificar variables del destino
+        let mazoDestino, contadorDestino;
+        if (idTapeteDestino === "receptor1") {
+          mazoDestino = mazoReceptor1;
+          contadorDestino = contReceptor1;
+        } else if (idTapeteDestino === "receptor2") {
+          mazoDestino = mazoReceptor2;
+          contadorDestino = contReceptor2;
+        } else if (idTapeteDestino === "receptor3") {
+          mazoDestino = mazoReceptor3;
+          contadorDestino = contReceptor3;
+        } else if (idTapeteDestino === "receptor4") {
+          mazoDestino = mazoReceptor4;
+          contadorDestino = contReceptor4;
+        }
 
-  // 2. Si no encontramos palo existente, buscar vacíos (Solo si es As)
-  if (infoCarta.numero === numeros[0]) {
-    for (let i = 1; i <= 4; i++) {
-      let info = getInfoReceptor("receptor" + i);
-      if (info.mazo.length === 0) return info;
-    }
-  }
+        // Verificar si el movimiento es legal en ESTE receptor
+        if (esMovimientoValido(cartaArrastrada, mazoDestino)) {
+          // Ejecutar movimiento
+          if (mazoOrigen === "inicial") {
+            moverDirectoAReceptor(
+              cartaArrastrada,
+              mazoDestino,
+              tapete,
+              contadorDestino,
+            );
+          } else if (mazoOrigen === "sobrantes") {
+            // Lógica manual de movimiento desde sobrantes
+            mazoSobrantes.pop();
+            mazoDestino.push(cartaArrastrada);
+            cartaArrastrada.setAttribute("data-mazo", idTapeteDestino);
+            tapete.appendChild(cartaArrastrada);
+            // Posicionar
+            let num = mazoDestino.length - 1;
+            cartaArrastrada.style.top = num * paso + "px";
+            cartaArrastrada.style.left = num * paso + "px";
 
-  return null;
+            decContador(contSobrantes);
+            incContador(contadorDestino);
+            incContador(contMovimientos);
+            verificarVictoria();
+          }
+        }
+      }
+
+      cartaArrastrada.classList.remove("dragging");
+    });
+  });
 }
 
 /***** FIN FUNCIONES DE MOVIMIENTO DE CARTAS *****/
