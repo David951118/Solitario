@@ -32,6 +32,7 @@ header h2 {
 	position: absolute;
 	bottom: 0px;
 	right: 3px;
+	z-index: 1;
 }
 
 
@@ -278,4 +279,9 @@ footer {
 footer p {
 	color: white;
 	text-align: center;
+}
+
+.circulo {
+	background-color:  rgba(0, 0, 0, 0.5) !important; 
+	color: white;	
 }
