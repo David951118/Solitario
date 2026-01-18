@@ -182,21 +182,17 @@ function configurarEventosDragDrop() {
           moverDesdeInicial(cartaArrastrada);
         }
       }
-      // 2. Si soltamos en un RECEPTOR (abajo)
+      // 2. Si soltamos en un RECEPTOR
       else if (tapete.classList.contains("receptor")) {
-        // Obtenemos el palo de la carta para ver si es el receptor correcto
-        let src = cartaArrastrada.src;
-        let nombreArchivo = src.substring(src.lastIndexOf("/") + 1);
-        let paloCarta = nombreArchivo.split("-")[1].replace(".png", "");
-        let indiceCorrecto = palos.indexOf(paloCarta) + 1; // receptor1, receptor2...
+        // Obtener el mazo correspondiente al tapete
+        let mazoDestino = getMazoDesdeTapete(idTapeteDestino);
 
-        // Solo procesamos si el jugador soltó la carta exactamente en el mazo de su palo
-        if (idTapeteDestino === "receptor" + indiceCorrecto) {
+        // Verificar validez (esMovimientoValido ahora validará el palo también)
+        if (esMovimientoValido(cartaArrastrada, mazoDestino)) {
           if (mazoOrigen === "inicial") {
-            // Permitir mover directo de Inicial a Receptor (mejor experiencia)
-            moverDirectoAReceptor(cartaArrastrada, mazoOrigen);
+            moverDirectoAReceptor(cartaArrastrada, idTapeteDestino);
           } else if (mazoOrigen === "sobrantes") {
-            moverDesdeSobrantes(cartaArrastrada);
+            moverDesdeSobrantes(cartaArrastrada, idTapeteDestino);
           }
         }
       }
@@ -246,12 +242,12 @@ function reiniciarJuego() {
 // Desarrollo del comienzo de juego
 function comenzarJuego() {
   /* Crear baraja, es decir crear el mazoInicial. Este será un array cuyos 
-	elementos serán elementos HTML <img>, siendo cada uno de ellos una carta.
-	Sugerencia: en dos bucles for, bárranse los "palos" y los "numeros", formando
-	oportunamente el nombre del fichero png que contiene a la carta (recuérdese poner
-	el path correcto en la URL asociada al atributo src de <img>). Una vez creado
-	el elemento img, inclúyase como elemento del array mazoInicial. 
-	*/
+  elementos serán elementos HTML <img>, siendo cada uno de ellos una carta.
+  Sugerencia: en dos bucles for, bárranse los "palos" y los "numeros", formando
+  oportunamente el nombre del fichero png que contiene a la carta (recuérdese poner
+  el path correcto en la URL asociada al atributo src de <img>). Una vez creado
+  el elemento img, inclúyase como elemento del array mazoInicial. 
+  */
 
   // Vaciar el mazoInicial por si ya había cartas de una partida anterior
   mazoInicial = [];
@@ -292,27 +288,27 @@ function comenzarJuego() {
 } // comenzarJuego
 
 /**
-	Se debe encargar de arrancar el temporizador: cada 1000 ms se
-	debe ejecutar una función que a partir de la cuenta autoincrementada
-	de los segundos (segundos totales) visualice el tiempo oportunamente con el 
-	format hh:mm:ss en el contador adecuado.
+  Se debe encargar de arrancar el temporizador: cada 1000 ms se
+  debe ejecutar una función que a partir de la cuenta autoincrementada
+  de los segundos (segundos totales) visualice el tiempo oportunamente con el 
+  format hh:mm:ss en el contador adecuado.
 
-	Para descomponer los segundos en horas, minutos y segundos pueden emplearse
-	las siguientes igualdades:
+  Para descomponer los segundos en horas, minutos y segundos pueden emplearse
+  las siguientes igualdades:
 
-	segundos = truncar (   segundos_totales % (60)                 )
-	minutos  = truncar ( ( segundos_totales % (60*60) )     / 60   )
-	horas    = truncar ( ( segundos_totales % (60*60*24)) ) / 3600 )
+  segundos = truncar (   segundos_totales % (60)                 )
+  minutos  = truncar ( ( segundos_totales % (60*60) )     / 60   )
+  horas    = truncar ( ( segundos_totales % (60*60*24)) ) / 3600 )
 
-	donde % denota la operación módulo (resto de la división entre los operadores)
+  donde % denota la operación módulo (resto de la división entre los operadores)
 
-	Así, por ejemplo, si la cuenta de segundos totales es de 134 s, entonces será:
-	   00:02:14
+  Así, por ejemplo, si la cuenta de segundos totales es de 134 s, entonces será:
+     00:02:14
 
-	Como existe la posibilidad de "resetear" el juego en cualquier momento, hay que 
-	evitar que exista más de un temporizador simultáneo, por lo que debería guardarse
-	el resultado de la llamada a setInterval en alguna variable para llamar oportunamente
-	a clearInterval en su caso.   
+  Como existe la posibilidad de "resetear" el juego en cualquier momento, hay que 
+  evitar que exista más de un temporizador simultáneo, por lo que debería guardarse
+  el resultado de la llamada a setInterval en alguna variable para llamar oportunamente
+  a clearInterval en su caso.   
 */
 
 function arrancarTiempo() {
@@ -337,10 +333,10 @@ function arrancarTiempo() {
 } // arrancarTiempo
 
 /**
-	Si mazo es un array de elementos <img>, en esta rutina debe ser
-	reordenado aleatoriamente. Al ser un array un objeto, se pasa
-	por referencia, de modo que si se altera el orden de dicho array
-	dentro de la rutina, esto aparecerá reflejado fuera de la misma.
+  Si mazo es un array de elementos <img>, en esta rutina debe ser
+  reordenado aleatoriamente. Al ser un array un objeto, se pasa
+  por referencia, de modo que si se altera el orden de dicho array
+  dentro de la rutina, esto aparecerá reflejado fuera de la misma.
 */
 function barajar(mazo) {
   // Recorremos el array desde el final hacia el inicio
@@ -360,8 +356,8 @@ function barajar(mazo) {
 }
 
 /**
-	  En el elemento HTML que representa el tapete inicial (variable tapeteInicial)
-	se deben añadir como hijos todos los elementos <img> del array mazo.
+    En el elemento HTML que representa el tapete inicial (variable tapeteInicial)
+  se deben añadir como hijos todos los elementos <img> del array mazo.
 */
 function cargarTapeteInicial(mazo) {
   tapeteInicial.innerHTML = "";
@@ -373,6 +369,7 @@ function cargarTapeteInicial(mazo) {
     carta.style.position = "absolute";
     carta.style.top = i * paso + "px";
     carta.style.left = i * paso + "px";
+    carta.style.transform = "";
     carta.setAttribute("data-mazo", "inicial");
 
     // Habilitar arrastre
@@ -418,8 +415,8 @@ function esLaDeArriba(carta) {
 }
 
 /**
-	  Esta función debe incrementar el número correspondiente al contenido textual
-		  del elemento que actúa de contador
+    Esta función debe incrementar el número correspondiente al contenido textual
+      del elemento que actúa de contador
 */
 function incContador(contador) {
   // Obtener el valor actual del contador (es texto, lo convertimos a número)
@@ -431,7 +428,7 @@ function incContador(contador) {
 } // incContador
 
 /**
-	Idem que anterior, pero decrementando 
+  Idem que anterior, pero decrementando 
 */
 function decContador(contador) {
   // Obtener el valor actual del contador
@@ -443,8 +440,8 @@ function decContador(contador) {
 } // decContador
 
 /**
-	Similar a las anteriores, pero ajustando la cuenta al
-	valor especificado
+  Similar a las anteriores, pero ajustando la cuenta al
+  valor especificado
 */
 function setContador(contador, valor) {
   // Simplemente establecer el valor que nos pasan
@@ -497,8 +494,9 @@ function moverDesdeInicial(carta) {
   tapeteSobrantes.appendChild(carta);
 
   // Reposicionar la carta en el centro del tapete de sobrantes
-  carta.style.top = "0px";
-  carta.style.left = "0px";
+  carta.style.top = "50%";
+  carta.style.left = "50%";
+  carta.style.transform = "translate(-50%, -50%)";
 
   // Actualizar contadores
   decContador(contInicial);
@@ -508,82 +506,57 @@ function moverDesdeInicial(carta) {
 
 /**
  * Mueve una carta desde el tapete de sobrantes a un receptor
- * Busca automáticamente el receptor correcto según el palo de la carta
- * Valida que el movimiento sea válido (orden correcto de números)
+ * Si se especifica destinoId, intenta mover a ese receptor.
+ * Si no, busca automáticamente el mejor receptor.
  *
  * @param {HTMLElement} carta - La carta a mover
+ * @param {string} [destinoId] - ID del tapete destino (opcional)
  */
-function moverDesdeSobrantes(carta) {
+function moverDesdeSobrantes(carta, destinoId = null) {
   // Verificar que sea la última carta del mazo de sobrantes
   if (mazoSobrantes[mazoSobrantes.length - 1] !== carta) {
-    return; // Solo se puede mover la carta de arriba
-  }
-
-  // Obtener el palo de la carta desde el nombre del archivo
-  // Ejemplo: "imagenes/baraja/9-viu.png" -> extraer "viu"
-  let src = carta.src;
-  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1); // "9-viu.png"
-  let palo = nombreArchivo.split("-")[1].replace(".png", ""); // "viu"
-
-  // Determinar a qué receptor pertenece este palo
-  let indiceReceptor = palos.indexOf(palo); // 0, 1, 2, o 3
-
-  // Obtener el tapete, mazo y contador receptor correspondiente
-  let tapeteDestino, mazoDestino, contadorDestino;
-
-  switch (indiceReceptor) {
-    case 0:
-      tapeteDestino = tapeteReceptor1;
-      mazoDestino = mazoReceptor1;
-      contadorDestino = contReceptor1;
-      break;
-    case 1:
-      tapeteDestino = tapeteReceptor2;
-      mazoDestino = mazoReceptor2;
-      contadorDestino = contReceptor2;
-      break;
-    case 2:
-      tapeteDestino = tapeteReceptor3;
-      mazoDestino = mazoReceptor3;
-      contadorDestino = contReceptor3;
-      break;
-    case 3:
-      tapeteDestino = tapeteReceptor4;
-      mazoDestino = mazoReceptor4;
-      contadorDestino = contReceptor4;
-      break;
-  }
-
-  // Validar si el movimiento es válido
-  if (!esMovimientoValido(carta, mazoDestino)) {
-    // Movimiento inválido - no hacer nada
-    // Podrías agregar un efecto visual aquí (shake, color rojo, etc.)
     return;
   }
 
-  // Remover la carta del mazoSobrantes
+  // Determinar el destino
+  let infoDestino = null;
+
+  if (destinoId) {
+    // Si hay un destino explícito (drag & drop)
+    infoDestino = getInfoReceptor(destinoId);
+    if (!esMovimientoValido(carta, infoDestino.mazo)) return;
+  } else {
+    // Automático (clic): Buscar el mejor receptor
+    infoDestino = buscarReceptorParaCarta(carta);
+    if (!infoDestino) return; // No hay movimiento válido
+  }
+
+  // Ejecutar movimiento
+  let { tapete, mazo, contador, id } = infoDestino;
+
+  // Remover de sobrantes
   mazoSobrantes.pop();
 
-  // Agregar la carta al mazo receptor
-  mazoDestino.push(carta);
+  // Agregar al receptor
+  mazo.push(carta);
 
-  // Actualizar el atributo data-mazo
-  carta.setAttribute("data-mazo", "receptor" + (indiceReceptor + 1));
+  // Actualizar atributo
+  carta.setAttribute("data-mazo", id);
 
-  // Mover visualmente la carta al tapete receptor
-  tapeteDestino.appendChild(carta);
+  // Mover visualmente
+  tapete.appendChild(carta);
 
-  // Posicionar la carta con desplazamiento según cuántas cartas hay
-  let numCartas = mazoDestino.length - 1;
+  // Posicionar
+  let numCartas = mazo.length - 1;
   carta.style.top = numCartas * paso + "px";
   carta.style.left = numCartas * paso + "px";
+  carta.style.transform = "";
 
   // Actualizar contadores
   decContador(contSobrantes);
-  incContador(contadorDestino);
+  incContador(contador);
   incContador(contMovimientos);
 
-  // Verificar si el jugador ganó
   verificarVictoria();
 }
 
@@ -604,24 +577,25 @@ function esMovimientoValido(carta, mazoDestino) {
   let numeroStr = partes[0]; // "9"
   let numero = parseInt(numeroStr); // 9
 
-  // Si el receptor está vacío, solo se puede colocar el 9
+  // Si el receptor está vacío, solo se puede colocar el 9 (en este caso el 1/As si numeros[0] es 1)
   if (mazoDestino.length === 0) {
-    return numero === numeros[0]; // Debe ser el primer número (9)
+    return numero === numeros[0];
   }
 
-  // Si el receptor tiene cartas, obtener el número de la última carta
+  // Si tiene cartas, obtener la última para comparar palo y número
   let ultimaCarta = mazoDestino[mazoDestino.length - 1];
-  let srcUltima = ultimaCarta.src;
-  let nombreUltima = srcUltima.substring(srcUltima.lastIndexOf("/") + 1);
-  let partesUltima = nombreUltima.split("-");
-  let numeroUltimaStr = partesUltima[0];
-  let numeroUltima = parseInt(numeroUltimaStr);
+  let infoUltima = obtenerInfoCarta(ultimaCarta);
+  let infoNueva = obtenerInfoCarta(carta);
 
-  // La nueva carta debe ser el siguiente número en secuencia
-  let indiceActual = numeros.indexOf(numeroUltima);
+  // 1. Validar PALO: Debe ser el mismo palo
+  if (infoUltima.palo !== infoNueva.palo) return false;
+
+  // 2. Validar NÚMERO: Debe ser consecutivo
+  let indiceActual = numeros.indexOf(infoUltima.numero);
+  if (indiceActual === -1) return false; // Error inesperado
+
   let siguienteNumero = numeros[indiceActual + 1];
-
-  return numero === siguienteNumero;
+  return infoNueva.numero === siguienteNumero;
 }
 
 /**
@@ -654,47 +628,96 @@ function verificarVictoria() {
  * Función especial para mover una carta de Inicial directamente a un Receptor
  * sin tener que pasar por sobrantes (si es un movimiento válido)
  */
-function moverDirectoAReceptor(carta, origen) {
-  // Extraer palo
-  let src = carta.src;
-  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1);
-  let palo = nombreArchivo.split("-")[1].replace(".png", "");
-  let indiceReceptor = palos.indexOf(palo);
 
-  let mazoDestino, tapeteDestino, contadorDestino;
-  if (indiceReceptor === 0) {
-    mazoDestino = mazoReceptor1;
-    tapeteDestino = tapeteReceptor1;
-    contadorDestino = contReceptor1;
-  } else if (indiceReceptor === 1) {
-    mazoDestino = mazoReceptor2;
-    tapeteDestino = tapeteReceptor2;
-    contadorDestino = contReceptor2;
-  } else if (indiceReceptor === 2) {
-    mazoDestino = mazoReceptor3;
-    tapeteDestino = tapeteReceptor3;
-    contadorDestino = contReceptor3;
-  } else if (indiceReceptor === 3) {
-    mazoDestino = mazoReceptor4;
-    tapeteDestino = tapeteReceptor4;
-    contadorDestino = contReceptor4;
-  }
+function moverDirectoAReceptor(carta, destinoId) {
+  // Solo se puede mover la de arriba
+  if (!esLaDeArriba(carta)) return;
 
-  if (esMovimientoValido(carta, mazoDestino)) {
+  // Si viene de drag & drop, destinoId está definido.
+  let infoDestino = getInfoReceptor(destinoId);
+
+  // Validar movimiento
+  if (esMovimientoValido(carta, infoDestino.mazo)) {
+    // Ejecutar movimiento
     mazoInicial.pop();
-    mazoDestino.push(carta);
-    carta.setAttribute("data-mazo", "receptor" + (indiceReceptor + 1));
-    tapeteDestino.appendChild(carta);
+    infoDestino.mazo.push(carta);
+    carta.setAttribute("data-mazo", infoDestino.id);
+    infoDestino.tapete.appendChild(carta);
 
-    let num = mazoDestino.length - 1;
+    let num = infoDestino.mazo.length - 1;
     carta.style.top = num * paso + "px";
     carta.style.left = num * paso + "px";
 
     decContador(contInicial);
-    incContador(contadorDestino);
+    incContador(infoDestino.contador);
     incContador(contMovimientos);
     verificarVictoria();
   }
+}
+
+/**
+ * Utilería para obtener info de una carta (palo y número) desde su src
+ */
+function obtenerInfoCarta(carta) {
+  let src = carta.src;
+  let nombreArchivo = src.substring(src.lastIndexOf("/") + 1);
+  let partes = nombreArchivo.split("-");
+  return {
+    numero: parseInt(partes[0]),
+    palo: partes[1].replace(".png", "")
+  };
+}
+
+/**
+ * Obtiene el objeto mazo array a partir del ID del tapete
+ */
+function getMazoDesdeTapete(idTapete) {
+  return getInfoReceptor(idTapete).mazo;
+}
+
+/**
+ * Obtiene referencia al tapete, mazo y contador a partir de un ID (receptor1, etc)
+ */
+function getInfoReceptor(id) {
+  switch (id) {
+    case "receptor1": return { id: "receptor1", tapete: tapeteReceptor1, mazo: mazoReceptor1, contador: contReceptor1 };
+    case "receptor2": return { id: "receptor2", tapete: tapeteReceptor2, mazo: mazoReceptor2, contador: contReceptor2 };
+    case "receptor3": return { id: "receptor3", tapete: tapeteReceptor3, mazo: mazoReceptor3, contador: contReceptor3 };
+    case "receptor4": return { id: "receptor4", tapete: tapeteReceptor4, mazo: mazoReceptor4, contador: contReceptor4 };
+    default: return null;
+  }
+}
+
+/**
+ * Busca un receptor válido para una carta dada (auto-move)
+ */
+function buscarReceptorParaCarta(carta) {
+  let infoCarta = obtenerInfoCarta(carta);
+
+  // 1. Buscar si ya hay un mazo con ese palo
+  // Iteramos receptores 1 a 4
+  for (let i = 1; i <= 4; i++) {
+    let info = getInfoReceptor("receptor" + i);
+    if (info.mazo.length > 0) {
+      let ultima = info.mazo[info.mazo.length - 1];
+      let infoUltima = obtenerInfoCarta(ultima);
+      // Si coincide el palo
+      if (infoUltima.palo === infoCarta.palo) {
+        // Verificar si el número es el siguiente
+        if (esMovimientoValido(carta, info.mazo)) return info;
+      }
+    }
+  }
+
+  // 2. Si no encontramos palo existente, buscar vacíos (Solo si es As)
+  if (infoCarta.numero === numeros[0]) {
+    for (let i = 1; i <= 4; i++) {
+      let info = getInfoReceptor("receptor" + i);
+      if (info.mazo.length === 0) return info;
+    }
+  }
+
+  return null;
 }
 
 /***** FIN FUNCIONES DE MOVIMIENTO DE CARTAS *****/
