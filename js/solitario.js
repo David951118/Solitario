@@ -360,6 +360,12 @@ function cargarTapeteInicial(mazo) {
 
     carta.addEventListener("dragend", function (e) {
       carta.classList.remove("dragging");
+      // SAFETY CHECK: Si al terminar el drag la carta ya NO está en sobrantes
+      // (porque se movió exitosamente o porque hubo un error visual),
+      // forzamos la limpieza del transform que causa el error.
+      if (carta.getAttribute("data-mazo") !== "sobrantes") {
+        carta.style.transform = "none";
+      }
     });
 
     tapeteInicial.appendChild(carta);
