@@ -3,9 +3,9 @@
 // Array de palos
 let palos = ["viu", "cua", "hex", "cir"];
 // Array de número de cartas
-//let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+let numeros = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // En las pruebas iniciales solo se trabajará con cuatro cartas por palo:
-let numeros = [9, 10, 11, 12];
+//let numeros = [9, 10, 11, 12];
 
 // paso (top y left) en pixeles de una carta a la siguiente en un mazo
 let paso = 5;
@@ -39,6 +39,9 @@ let contMovimientos = null;
 let contTiempo = null; // span cuenta tiempo (se inicializará cuando el DOM esté listo)
 let segundos = 0; // cuenta de segundos
 let temporizador = null; // manejador del temporizador
+
+// Contador de barajadas (para debugging y tracking)
+let contadorBarajadas = 0;
 
 /***** FIN DECLARACIÓN DE VARIABLES GLOBALES *****/
 
@@ -130,6 +133,9 @@ function configurarEventosModales() {
  * Y las BARAJA automáticamente (Requisito: Mazo cíclico aleatorio)
  */
 function recogerMazo() {
+  // Incrementar contador de barajadas
+  contadorBarajadas++;
+
   // 1. Barajar las cartas que están en sobrantes
   barajar(mazoSobrantes);
 
@@ -219,10 +225,17 @@ function limpiarTapete(tapete) {
  * Reinicia completamente el juego
  */
 function reiniciarJuego() {
+
   if (temporizador) {
     clearInterval(temporizador);
     temporizador = null;
   }
+
+  // Resetear el contador de segundos
+  segundos = 0;
+
+  // Resetear contador de barajadas
+  contadorBarajadas = 0;
 
   // Limpiar cartas de todos los tapetes (manteniendo los contadores)
   limpiarTapete(tapeteInicial);
@@ -240,9 +253,14 @@ function reiniciarJuego() {
   mazoReceptor3 = [];
   mazoReceptor4 = [];
 
-  document.getElementById("noMoves").style.display = "none";
+  // Ocultar modales
+  let noMovesModal = document.getElementById("noMoves");
+  if (noMovesModal) {
+    noMovesModal.style.display = "none";
+  }
   document.getElementById("victory").style.display = "none";
 
+  // Reiniciar el juego
   comenzarJuego();
 }
 
@@ -252,6 +270,9 @@ function reiniciarJuego() {
 function comenzarJuego() {
   // Vaciar el mazoInicial por si ya había cartas de una partida anterior
   mazoInicial = [];
+
+  // Resetear contador de barajadas
+  contadorBarajadas = 0;
 
   // PASO 1: Crear todas las cartas (bucles anidados)
   // Recorrer cada palo
@@ -561,6 +582,33 @@ function verificarVictoria() {
       document.getElementById("victory").style.display = "block";
     }, 500);
   }
+}
+
+/**
+ * Helper: Obtiene información del receptor basado en su ID
+ */
+function getInfoReceptor(idReceptor) {
+  if (idReceptor === "receptor1") {
+    return { id: "receptor1", mazo: mazoReceptor1, tapete: tapeteReceptor1, contador: contReceptor1 };
+  } else if (idReceptor === "receptor2") {
+    return { id: "receptor2", mazo: mazoReceptor2, tapete: tapeteReceptor2, contador: contReceptor2 };
+  } else if (idReceptor === "receptor3") {
+    return { id: "receptor3", mazo: mazoReceptor3, tapete: tapeteReceptor3, contador: contReceptor3 };
+  } else if (idReceptor === "receptor4") {
+    return { id: "receptor4", mazo: mazoReceptor4, tapete: tapeteReceptor4, contador: contReceptor4 };
+  }
+  return null;
+}
+
+/**
+ * Helper: Obtiene el mazo correspondiente a un tapete
+ */
+function getMazoDesdeTapete(idTapete) {
+  if (idTapete === "receptor1") return mazoReceptor1;
+  if (idTapete === "receptor2") return mazoReceptor2;
+  if (idTapete === "receptor3") return mazoReceptor3;
+  if (idTapete === "receptor4") return mazoReceptor4;
+  return null;
 }
 
 /**
